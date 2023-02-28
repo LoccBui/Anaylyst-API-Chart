@@ -1,18 +1,28 @@
 <template>
   <div>
-    <v-text-field 
-      v-model="inputAPI" 
-      label="Nhập link api của bạn" 
-      @keyup.enter="getDataAPI()">
-    </v-text-field>
 
-    <v-btn 
-      :disabled="btnDisabled"
-      color="primary" 
-      block
-      @click="getDataAPI()" 
-      > Phân tích 
-    </v-btn>
+    <v-form
+        ref="form"
+        v-model="valid"
+        @submit.prevent="getDataAPI()"
+      >
+               
+      <v-text-field 
+        v-model="inputAPI" :rules="inputRules"
+        label="Nhập link api của bạn" 
+        required
+        @keyup.enter="getDataAPI()">
+      </v-text-field>
+
+      <v-btn 
+        :disabled="btnDisabled"
+        color="primary" 
+        block
+        @click="getDataAPI()" 
+        
+        > Phân tích 
+      </v-btn>
+   </v-form>
 
     <div class="loading" v-if="loading">
         <v-progress-circular
@@ -27,9 +37,10 @@
 
   <div v-else>
     <div class="data-choose" v-if="loaded">
-        <div v-for="item in keyAPI" :key="item">
+        <div v-for="item in keyAPI" :key="item" class="data-item">
             <v-btn 
               color="#90CAF9"
+              min-width="220px"
              :disabled="clicked.includes(item)" 
              @click="addToChart(item)"
              > {{ item }} 
@@ -39,14 +50,21 @@
   </div>
     
 
-    <Bar
+    <!-- <Bar
     v-if="loaded"
     :options="chartOptions"
     :data="chartData"
     :key="componentKey" 
-    />  
+    />   -->
 
-  
+    <PieChart 
+      v-if="showPieChart"
+      :dataAPI="chartData"
+      :keyTransfer="updateChart"
+      :newData="newData"
+    />
+
+
   </div>
 </template>
 
@@ -54,16 +72,20 @@
 import axios from "axios";
 
 import { Bar } from 'vue-chartjs'
+import PieChart from "./PieChart.vue";
+
+
 import { Chart as ChartJS, Title, Tooltip, Legend, BarElement, CategoryScale, LinearScale } from 'chart.js'
 
 ChartJS.register(Title, Tooltip, Legend, BarElement, CategoryScale, LinearScale)
 
 
 export default {
-  name: 'BarChart',  
-  components: { Bar },
+  name: 'Chart',
+  components: { Bar, PieChart },
   data(){
       return{
+        valid: false, 
         inputAPI: '',
         keyAPI: [],
         componentKey: 0,
@@ -71,17 +93,27 @@ export default {
         btnDisabled: false,
         loading: false,
         clicked: [],
-
+        
         dataAPI: "",
+        inputRules: [
+            v => !!v || 'Bạn cần nhập link API',
+            v => (v && v.length > 0) || 'Link API không được để trống',
+            v => (v && v.length > 10) || 'Link API không được dưới 10 kí tự',
+        ],
 
         chartData: {
           labels: [],
-          datasets: [ 
-          ]
+          datasets: []
         },
+
         chartOptions: {
-          responsive: true
-        }
+          responsive: true,
+        },
+
+        // Pie chart
+        showPieChart: false,
+        updateChart: 0,
+        newData: ''
         
       }
     },
@@ -97,16 +129,19 @@ export default {
       },
 
         getDataAPI(){
-          this.loading = true
-          try{
-            axios.get(`${this.inputAPI}`)
-             .then(res => this.analystAPI(res))
-            this.btnDisabled = true
+          if(this.valid && this.inputAPI != ''){
 
+            this.loading = true
+            try{
+              axios.get(`${this.inputAPI}`)
+              .then(res => this.analystAPI(res))
+              this.btnDisabled = true
+            }
+            catch(e){
+              console.error(e)
+            }
           }
-          catch(e){
-            console.error(e)
-          }
+          
         },
 
         analystAPI(API){
@@ -119,11 +154,14 @@ export default {
           this.keyAPI.length=0
           for (let i = 0; i < splitAPI.length; i++){
               this.keyAPI.push(splitAPI[i])
-
           }
 
+
+
+          this.chartData.labels.length=0
           for (let i = 1; i <= this.dataAPI.length; i++){
               this.chartData.labels.push(i)
+            console.log(this.chartData.labels)
           }
 
 
@@ -133,6 +171,7 @@ export default {
         addToChart(item){
          
           this.clicked.push(item)             //disable button 
+
 
 
           // Random color when choose data
@@ -154,6 +193,12 @@ export default {
 
           //TIP : update chart 
           this.componentKey += 1; 
+
+          //Pie
+          this.updateChart +=1
+          this.showPieChart = true
+          this.newData = newdata
+
         },
 
 
@@ -164,7 +209,7 @@ export default {
 <style lang="scss" scoped>
 .data-choose{
   display: flex;
-  justify-content: space-around;
+  justify-content: start;
   align-items: center;
   flex-wrap: wrap;
 
@@ -172,6 +217,10 @@ export default {
   border-radius: 20px;
   padding: 20px;
   margin-top: 20px;
+}
+
+.data-item{
+  padding: 10px;
 }
 
 .loading{
