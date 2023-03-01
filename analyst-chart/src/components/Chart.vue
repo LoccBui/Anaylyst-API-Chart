@@ -11,7 +11,9 @@
         v-model="inputAPI" :rules="inputRules"
         label="Nhập link api của bạn" 
         required
-        @keyup.enter="getDataAPI()">
+        @keyup.enter="getDataAPI()"
+        autofocus
+        >
       </v-text-field>
 
       <v-btn 
@@ -33,10 +35,59 @@
       <h1 class="notify-text">Đang phân tích biểu đồ của bạn</h1>
     </div>
 
+
+    
+    <!-- Select Chart -->
+    <div v-if="loaded"  class="chart-choose">
+
+      <div class="data-choose">
+
+        <v-chip
+          class="ma-2"
+          color="cyan-darken-4"
+          pill
+        >Select Chart
+        </v-chip>
+
+        <v-divider 
+          color="primary" 
+          thickness="2px">
+        </v-divider>
+
+
+        <div v-for="chart in keySelectChart" :key="chart" class="data-item">
+              <v-btn 
+                color="#90CAF9"
+                min-width="220px"
+                block
+              :disabled="clickedChart.includes(chart)" 
+              @click="handleSelectChart(chart)"
+              > {{ chart }} 
+              </v-btn>     
+        </div>
+
+                 
+
+      </div>
+    </div>
    
 
-  <div v-else>
-    <div class="data-choose" v-if="loaded">
+  <div v-if="showSelectData" class="chart-choose">
+    <div class="data-choose" >
+
+        <v-chip
+          class="ma-2"
+          color="cyan-darken-4"
+          pill
+        >
+          Select data
+        </v-chip>
+
+        <v-divider 
+          color="primary" 
+          thickness="2px">
+        </v-divider>  
+      
         <div v-for="item in keyAPI" :key="item" class="data-item">
             <v-btn 
               color="#90CAF9"
@@ -50,18 +101,32 @@
   </div>
     
 
-    <!-- <Bar
-    v-if="loaded"
-    :options="chartOptions"
-    :data="chartData"
-    :key="componentKey" 
-    />   -->
+  <div class="chart-cover" v-if="showBarChart">
+
+    <v-chip
+      class="ma-2"
+      color="green-darken-4"
+      pill
+    >
+      Bar chart
+    </v-chip>
+
+    <div class="chart-area">  
+      <Bar
+        v-if="showBarChart"
+        :options="chartOptions"
+        :data="chartData"
+        :key="componentKey" 
+      />  
+    </div>
+
+  </div>
 
     <PieChart 
       v-if="showPieChart"
-      :dataAPI="chartData"
       :keyTransfer="updateChart"
       :newData="newData"
+      :resetChart="resetChart"
     />
 
 
@@ -85,6 +150,8 @@ export default {
   components: { Bar, PieChart },
   data(){
       return{
+        showSelectData: false,
+        showBarChart: false,
         valid: false, 
         inputAPI: '',
         keyAPI: [],
@@ -113,8 +180,17 @@ export default {
         // Pie chart
         showPieChart: false,
         updateChart: 0,
-        newData: ''
+        newData: '',
+        resetChart: 0,
+    
+
+        // button choose chart
+        keySelectChart: ['Bar', 'Pie'],
+        clickedChart: '',
+        denyChooseChart: false,
+
         
+
       }
     },
 
@@ -169,10 +245,7 @@ export default {
         },
 
         addToChart(item){
-         
           this.clicked.push(item)             //disable button 
-
-
 
           // Random color when choose data
           var randomColor = Math.floor(Math.random()*16777215).toString(16);
@@ -196,17 +269,56 @@ export default {
 
           //Pie
           this.updateChart +=1
-          this.showPieChart = true
           this.newData = newdata
 
         },
 
+
+        handleSelectChart(chartChoose){
+          this.clickedChart = chartChoose
+
+
+          if(chartChoose){
+            this.showSelectData = true
+            this.denyChooseChart = true
+          }
+
+          var charName = chartChoose
+
+          switch(charName) {
+            case 'Bar': {
+              this.showBarChart = true
+              this.showPieChart = false
+              break
+            }
+
+            case 'Pie': {
+
+              this.showBarChart = false
+              this.showPieChart = true
+              break
+            }
+
+          }
+
+        }
 
     }
 }
 </script>
 
 <style lang="scss" scoped>
+
+.chart-choose{
+  width: 100%;
+  border-radius: 20px;
+  padding: 10px;
+  display: flex;
+  flex-direction: column;
+  justify-content: start;
+
+}
+
 .data-choose{
   display: flex;
   justify-content: start;
@@ -217,6 +329,7 @@ export default {
   border-radius: 20px;
   padding: 20px;
   margin-top: 20px;
+  width: 100%;
 }
 
 .data-item{
@@ -235,6 +348,23 @@ export default {
 .notify-text{
   margin-top: 50px;
   color: #1867c0;
+}
+
+
+.chart-cover{
+  margin-top: 50px;
+  width: 100%;
+  height: 500px;
+  display: flex;
+  align-items: center;
+}
+
+.chart-area{
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 500px;
 }
 
 </style>

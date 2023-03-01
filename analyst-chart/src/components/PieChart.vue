@@ -1,14 +1,22 @@
 <template>
-  <div>
-    <h1>This is Pie</h1>
+  <div class="container">
+
+    <v-chip
+      class="ma-2"
+      color="green-darken-4"
+      pill
+    >
+      Pie chart
+    </v-chip>
 
 
-    <Pie 
-        :data="dataChart"
-        :options="optionsChart"
-        :key="pieChartUpdate"
-    /> 
-
+    <div class="chart-area"> 
+        <Pie 
+            :data="dataChart"
+            :options="optionsChart"
+            :key="pieChartUpdate"
+        /> 
+    </div>
 
   </div>
 </template>
@@ -22,7 +30,7 @@ ChartJS.register(ArcElement, Tooltip, Legend)
 export default {
     name: 'PieChart',
     components: { Pie },
-    props: ["dataAPI", "keyTransfer", "newData"],
+    props: ["keyTransfer", "newData"],
     mounted(){
         this.handleDataTransfer()
     },
@@ -31,8 +39,9 @@ export default {
         keyTransfer: function(){
             this.handleDataTransfer()
         }
+
+
     },
-    // labels: ['VueJs', 'EmberJs', 'ReactJs', 'AngularJs'],
 
 
     data(){
@@ -41,12 +50,7 @@ export default {
 
             dataChart : {
                 labels: [],
-                datasets: [
-                    {
-                        backgroundColor: ['#41B883', '#E46651', '#00D8FF', '#DD1B16'],
-                        data: [40, 20, 80, 10]
-                    }
-                ]
+                datasets: []
             },
 
             optionsChart: {
@@ -57,40 +61,40 @@ export default {
 
     methods:{
         handleDataTransfer(){
-            console.info("--------------------------DataTransfer")  
-            console.log(this.dataAPI)
-            console.log(this.newData)
-
-
-            this.dataChart.labels.push(this.newData.label)
-            console.log(this.dataChart.labels)
-
+            if(this.dataChart.labels[0] == null){
+                this.dataChart.labels.length =0
+            }
             
-
             
-            // this.dataChart.labels.push(this.dataAPI.datasets[0].label)
+            //title value: labels
+            this.dataChart.labels.push(this.newData.label)            
 
-
-
-            // console.log( this.dataAPI.datasets[0].data)
-            // this.dataChart.datasets.data.length = 0
-            // this.dataChart.datasets.data.push(this.dataAPI.datasets[0].data)
-
-
-            // console.log( this.newData)
+            //data : datasets -> data
             this.dataChart.datasets.push(this.newData)
 
-
-
-
-
-            this.pieChartUpdate+=1
+            this.pieChartUpdate += 1
         }
     }
 
 }
 </script>
 
-<style>
+<style lang="scss" scoped>
+.container{
+    margin-top: 50px;
+    width: 100%;
+    height: 500px;
+    display: flex;
+    justify-content: center;
+     align-items: center;
 
+}
+.chart-area{
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 500px;
+}
 </style>
+
